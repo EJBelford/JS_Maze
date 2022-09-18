@@ -20,10 +20,10 @@
 
 // console.log('Hi there!');
 
-const { Engine, Render, Runner, World, Bodies } = Matter; 
+const { Engine, Render, Runner, World, Bodies, Mouse, MouseConstraint } = Matter; 
 
 const height     = 600;
-const width      = 600;
+const width      = 800;
 const width_brdr = 40;
 
 const engine    = Engine.create();
@@ -32,7 +32,7 @@ const render    = Render.create({
     element: document.body,
     engine:  engine,
     options: {
-        wireframes: true, 
+        wireframes: false, 
         width,
         height
     }
@@ -41,13 +41,48 @@ const render    = Render.create({
 Render.run(render);
 Runner.run(Runner.create(), engine); 
 
+World.add(world, 
+    MouseConstraint.create(engine, {
+        mouse: Mouse.create(render.canvas)
+    })
+);
+
 // Walls
 const walls = [
-    Bodies.rectangle(width/2, 0,        width,      width_brdr, { isStatic: true }),
-    Bodies.rectangle(width/2, height,   width,      width_brdr, { isStatic: true }),
-    Bodies.rectangle(      0, height/2, width_brdr, width, { isStatic: true }),
-    Bodies.rectangle( width,  height/2, width_brdr, width, { isStatic: true })
+    Bodies.rectangle(400,   0,        800, width_brdr, { isStatic: true }),
+    Bodies.rectangle(400, 600,        800, width_brdr, { isStatic: true }),
+    Bodies.rectangle(  0, 300, width_brdr,        600, { isStatic: true }),
+    Bodies.rectangle(800, 300, width_brdr,        600, { isStatic: true })
 ];
 World.add(world, walls);
+
+/* const shape = Bodies.rectangle(200, 200, 50, 50, {
+    isStatic: true
+}); 
+World.add(world, shape); */
+
+// Random Shapes
+
+for (let i = 0; i < 40; i++) {
+    if (Math.random() > .5) {
+        World.add(world, 
+            Bodies.rectangle(Math.random() * width, Math.random() * height, 50, 50)
+        );
+    } else {
+        World.add(world, 
+            Bodies.circle(
+                Math.random() * width,
+                Math.random() * height, 
+                35 
+                /* , {
+                    render: {
+                        fillStyle: 'red'
+                  }
+                } */
+            )
+        );
+    }
+
+};
 
 
