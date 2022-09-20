@@ -7,7 +7,7 @@
 //--*----|----*----|----*----|----*----|----*----|----*----|----*----|----*----/
 //
 // Section 22: Section 22: Javascript with Canvas API
-// Lesson: 287
+// Lesson: 297
 //
 //--*----1----*----2----*----3----*----4----*----5----*----6----*----7----*----8
 // NOTES: 
@@ -20,16 +20,20 @@
 
 // console.log('Hi there!');
 
-const debug = 1;
+const debug = 0;    // 0: Off   1: On
 
-const { Engine, Render, Runner, World, Bodies } = Matter; 
+const { Engine, Render, Runner, World, Body, Bodies, Events } = Matter; 
 
-const cells      = 3;
+const cells      = 5;
 const height     = 600;
+const unitLength = height / cells;
+const wallWidth  = 5;
+
 const width      = 600;
-const width_brdr = 40;
+const width_brdr = 2;
 
 const engine    = Engine.create();
+engine.world.gravity.y = 0;
 const { world } = engine;
 const render    = Render.create({
     element: document.body,
@@ -158,4 +162,116 @@ stepThroughCell(startRow, startCol);
 if (debug > 0) {
     console.log(grid); 
 };
+
+// Horizontal Walla
+
+horizontals.forEach((row, rowIndex) => {
+    row.forEach((open, columnIndex) => {
+        if (open) { 
+            return; 
+        };
+
+        const wall = Bodies.rectangle(
+            (columnIndex * unitLength) + unitLength / 2,
+            (rowIndex * unitLength) + unitLength,
+            unitLength,
+            wallWidth, 
+            {
+                label:    'wall', 
+                isStatic: true
+            }
+        );
+        World.add(world, wall);
+    });
+});
+
+// Vertical Walls
+
+verticals.forEach((row, rowIndex) => {
+    row.forEach((open, columnIndex) => {
+        if (open) {
+            return;
+        }; 
+
+        const wall = Bodies.rectangle(
+            (columnIndex * unitLength) + unitLength,
+            (rowIndex * unitLength) + unitLength / 2,
+            wallWidth, 
+            unitLength, 
+            {
+                label:    'wall', 
+                isStatic: true
+            }
+        );
+        World.add(world, wall);
+    });
+});
+
+// Goal
+
+const goal = Bodies.rectangle( 
+    width - ( unitLength / 2),
+    height - (unitLength / 2),
+    unitLength * .75, 
+    unitLength * .75,
+    {
+        label:    'goal', 
+        isStatic: true
+    }
+);
+World.add(world, goal); 
+
+// Ball
+
+const ball = Bodies.circle(
+    unitLength / 2, 
+    unitLength / 2,
+    unitLength / 2 * .7, 
+    {
+        label: 'ball'
+    }
+);
+World.add(world, ball); 
+
+// Ball Controls
+
+document.addEventListener('keydown', event => { 
+    const { x, y } = ball.velocity; 
+
+    // w: up 87
+    if (event.key === 'w') {
+        Body.setVelocity(ball, { x: x, y: y-5});
+    };
+    // d: right 68
+    if (event.key === 'd') {
+        Body.setVelocity(ball, { x: x+5, y});
+    };
+    // s: down 83
+    if (event.key === 's') {
+        Body.setVelocity(ball, { x, y: y+5});
+    };
+    // a: left 65
+    if (event.key === 'a') {
+        Body.setVelocity(ball, { x: x-5, y});
+    };
+});
+
+// Win Condition
+
+Events.on(engine, 'collisionStart', event => {
+    event.pairs.forEach(collision => {
+        const labels = ['ball', 'goal'];
+        if (
+            labels.includes(collision.bodyA.label) && 
+            labels.includes(collision.bodyB.label)
+        ) {
+            world.gravity.y = 1;
+            world.bodies.forEach(body => {
+                if (body.label === 'wall') {
+                    Body.setStatic(body, false);
+                }
+            });
+        }
+    });
+}); 
 
